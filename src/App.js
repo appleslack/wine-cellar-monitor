@@ -10,6 +10,10 @@ let awsConfig = {
   clientId: process.env.clientId,
   userPoolId: process.env.REACT_APP_USER_POOL_ID
 };
+console.log(AWS.config.credentials);
+console.log("here!");
+
+console.log("Prcess.env.region: " + process.env.REACT_APP_REGION);
 
 const mqttClient = AWSIoTData.device({
   region: awsConfig.region,
