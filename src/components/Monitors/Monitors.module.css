@@ -1,0 +1,8 @@
+/*  Monitors will be a parent flexbox that encloses multiple monitors */
+.Monitors {
+
+  border: 1px solid red;
+  background-color: white;
+  display: flex;
+  
+}
