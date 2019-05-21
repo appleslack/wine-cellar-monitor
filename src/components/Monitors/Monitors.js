@@ -1,9 +1,8 @@
 import React from 'react';
 import classes from './Monitors.module.css';
-import Monitor from './Monitors/Monitor/Monitor';
-import TemperatureMonitor from './Monitors/Monitor/TemperatureMonitor';
-import HumidifyMonitor from './Monitors/Monitor/HumidifyMonitor';
-import DoorMonitor from './Monitors/Monitor/DoorMonitor';
+import TemperatureMonitor from './Monitor/TemperatureMonitor';
+import HumidityMonitor from './Monitor/HumidityMonitor';
+import DoorMonitor from './Monitor/DoorMonitor';
 
 const monitors = (props) => {
   return (

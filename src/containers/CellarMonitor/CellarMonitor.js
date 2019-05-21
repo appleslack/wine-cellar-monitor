@@ -1,5 +1,6 @@
 import React, {Component} from 'react';
 import Modal from '../../components/UI/Modal/Modal';
+import Monitors from '../../components/Monitors/Monitors';
 
 // const INGREDIENT_PRICES = {
 //   lettuce : 0.5,
@@ -90,12 +91,7 @@ class CellarMonitor extends Component {
 
     return (
       <React.Fragment>
-        <div>MONITOR_GROUP
-          <div>TEMP MONITOR</div>
-          <div>HUMIDITY MONITORY</div>
-          <div>DOOR MONITORY</div>
-        </div>
-
+        <Monitors />
       </React.Fragment>
     );
   }

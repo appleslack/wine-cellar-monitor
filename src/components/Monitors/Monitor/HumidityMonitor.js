@@ -1,11 +1,14 @@
 import React, {Component} from 'react';
 import classes from './HumidityMonitor.module.css';
+import baseclasses from './Monitor.module.css';
 
-class TemperatureMonitor extends Component {
+class HumidityMonitor extends Component {
   render () {
-    <div className={[ classes.Monitor, classes.HumidityMonitor].join(' ')}>
-      Temperature Monitor
-    </div>
+    return (
+      <div className={[ baseclasses.Monitor, classes.HumidityMonitor].join(' ')}>
+        Humidity Monitor
+      </div>
+    );
   }
 }
 
