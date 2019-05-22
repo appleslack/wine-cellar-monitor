@@ -1,8 +1,10 @@
 /*  Monitors will be a parent flexbox that encloses multiple monitors */
 .Monitors {
-
   border: 1px solid red;
   background-color: white;
   display: flex;
-  
+  justify-content: space-between;
+  height: 400px;
+  width: 600px;
+
 }
