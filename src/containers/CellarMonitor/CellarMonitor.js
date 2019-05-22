@@ -71,8 +71,8 @@ mqttClient.on('message', (topic, payload) => {
 class CellarMonitor extends Component {
 
   state = {
-    temperature : undefined,
-    humidity : undefined,
+    temperature : 65.4,
+    humidity : 45,
     doorOpen : false,
     temperatureUnit : 'farenheit',
     isConnected : false,
@@ -91,7 +91,7 @@ class CellarMonitor extends Component {
 
     return (
       <React.Fragment>
-        <Monitors />
+        <Monitors currentState={this.state}/>
       </React.Fragment>
     );
   }
