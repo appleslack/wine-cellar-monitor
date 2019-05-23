@@ -54,10 +54,6 @@ class CellarMonitor extends Component {
       clientId: process.env.clientId,
       userPoolId: process.env.REACT_APP_USER_POOL_ID
     };
-    console.log(AWS.config.credentials);
-    console.log("here!");
-
-    console.log("Prcess.env.region: " + process.env.REACT_APP_REGION);
 
     const mqttClient = AWSIoTData.device({
       region: awsConfig.region,
@@ -94,7 +90,7 @@ class CellarMonitor extends Component {
       this.setState( {connected: true, connecting:false});
 
       console.log('mqttClient connected')
-      mqttClient.subscribe('real-time-weather')
+      mqttClient.subscribe('$aws/things/WineCellarMonitor/shadow/#')
     });
 
     mqttClient.on('error', (err) => {
