@@ -32,8 +32,63 @@ getWineCellarShadow = () => {
   return shadow;
 }
 
+
 mainApp = (args) => {
   const thingShadow = getWineCellarShadow();
+
+  thingShadow.on('connect', function() {
+     console.log('connected to AWS IoT');
+  });
+
+  thingShadow.on('close', function() {
+     console.log('close');
+     thingShadow.unregister(thingName);
+  });
+
+  thingShadow.on('reconnect', function() {
+     console.log('reconnect');
+  });
+
+  thingShadow.on('offline', function() {
+     //
+     // If any timeout is currently pending, cancel it.
+     //
+     if (currentTimeout !== null) {
+        clearTimeout(currentTimeout);
+        currentTimeout = null;
+     }
+     //
+     // If any operation is currently underway, cancel it.
+     //
+     while (stack.length) {
+        stack.pop();
+     }
+     console.log('offline');
+  });
+
+  thingShadow.on('error', function(error) {
+     console.log('error', error);
+  });
+
+  thingShadow.on('message', function(topic, payload) {
+     console.log('message', topic, payload.toString());
+  });
+
+  thingShadow.on('status', function(thingName, stat, clientToken, stateObject) {
+     handleStatus(thingName, stat, clientToken, stateObject);
+  });
+
+  thingShadow.on('delta', function(thingName, stateObject) {
+     handleDelta(thingName, stateObject);
+  });
+
+  thingShadow.on('timeout', function(thingName, clientToken) {
+     handleTimeout(thingName, clientToken);
+  });
+
+  thingShadow.on('message', function(topic, payload) {
+     handleMessage(topic, payload);
+  });
 
   thingShadow.register('TemperatureStatus', {
      persistentSubscribe: true
