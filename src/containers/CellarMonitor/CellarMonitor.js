@@ -40,6 +40,24 @@ class CellarMonitor extends Component {
 
   }
 
+  handleMessageReceived = (msg) => {
+    var newState = new Object();
+
+    if( msg.state.temperature != undefined ) {
+      newState.temperature = msg.state.temperature;
+    }
+    if( msg.state.humidity != undefined ) {
+      newState.humidity = msg.state.humidity;
+    }
+    if( msg.state.doorOpen != undefined ) {
+      newState.doorOpen = msg.state.doorOpen;
+    }
+
+
+    this.setState( newState );
+
+  }
+
   connectToAWS = () => {
     console.log('Connecting to AWS...');
     this.setState( {connecting: true });
@@ -90,7 +108,7 @@ class CellarMonitor extends Component {
       this.setState( {connected: true, connecting:false});
 
       console.log('mqttClient connected')
-      mqttClient.subscribe('$aws/things/WineCellarMonitor/shadow/#')
+      mqttClient.subscribe('$aws/things/WineCellarMonitor/shadow/update')
     });
 
     mqttClient.on('error', (err) => {
@@ -100,6 +118,8 @@ class CellarMonitor extends Component {
     mqttClient.on('message', (topic, payload) => {
       const msg = JSON.parse(payload.toString());
       console.log('mqttClient message: ', msg);
+
+      this.handleMessageReceived(msg);
     });
   }
 
