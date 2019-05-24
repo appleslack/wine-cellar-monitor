@@ -29,15 +29,27 @@ class WineCellarMonitorShadow {
   }
 
   processArgs(args) {
+    this.stateObject = new Object();
+
     if( args.doorOpen != undefined ) {
       console.log('Door open: ', args.doorOpen);
+      if( args.doorOpen === 'true') {
+        this.stateObject.doorOpen = true;
+      }
+      else {
+        this.stateObject.doorOpen = false;
+      }
     }
     if( args.temperature != undefined ) {
       console.log('Temperature: ', args.temperature);
+      this.stateObject.temperature = args.temperature;
     }
     if( args.humidity != undefined ) {
       console.log('Humidity', args.humidity);
+      this.stateObject.humidity = args.humidity;
     }
+
+    console.log('State Object is ', this.stateObject);
   }
 
   start() {
@@ -55,25 +67,25 @@ class WineCellarMonitorShadow {
     );
     AWS.config.region = this.awsConfig.region;
 
-    this.shadow.on('connect', function() {
+    this.shadow.on('connect', () => {
        console.log('connected to AWS IoT');
        this.handleConnected();
     });
-    this.shadow.on('close', function() {
+    this.shadow.on('close', () => {
        console.log('close');
        this.shadow.unregister(thingName);
     });
 
-    this.shadow.on('reconnect', function() {
+    this.shadow.on('reconnect', () => {
        console.log('reconnect');
     });
 
-    this.shadow.on('offline', function() {
+    this.shadow.on('offline', () => {
        //
        // If any timeout is currently pending, cancel it.
        //
        if (currentTimeout !== null) {
-          clearTimeout(currentTimeout);
+          this.clearTimeout(currentTimeout);
           currentTimeout = null;
        }
        //
@@ -93,38 +105,102 @@ class WineCellarMonitorShadow {
        console.log('message', topic, payload.toString());
     });
 
-    this.shadow.on('status', function(thingName, stat, clientToken, stateObject) {
-       handleStatus(thingName, stat, clientToken, stateObject);
+    this.shadow.on('status', (thingName, stat, clientToken, stateObject) => {
+       this.handleStatus(thingName, stat, clientToken, stateObject);
     });
 
-    this.shadow.on('delta', function(thingName, stateObject) {
-       handleDelta(thingName, stateObject);
+    this.shadow.on('delta', (thingName, stateObject) => {
+       this.handleDelta(thingName, stateObject);
     });
 
-    this.shadow.on('timeout', function(thingName, clientToken) {
-       handleTimeout(thingName, clientToken);
+    this.shadow.on('timeout', (thingName, clientToken) => {
+       this.handleTimeout(thingName, clientToken);
     });
 
-    this.shadow.on('message', function(topic, payload) {
-       handleMessage(topic, payload);
+    this.shadow.on('message', (topic, payload) => {
+       this.handleMessage(topic, payload);
     });
 
   }
 
+  publishState( stateObject, topic ) {
+    const message = JSON.stringify({
+       message: 'state ' +
+          JSON.stringify(stateObject)
+    });
+
+    console.log('Publishing message: ', message);
+    this.shadow.publish(topic, message);
+
+  }
+  // Handlers for each mqtt callbacks
+
   handleConnected() {
-    this.shadow.register( TEMP_STATUS_TOPIC, function() {
+    this.shadow.register( TEMP_STATUS_TOPIC, () => {
       console.log('Registered for topic '+ TEMP_STATUS_TOPIC);
     });
 
-    this.shadow.register( HUMIDITY_STATUS_TOPIC, function() {
+    this.shadow.register( HUMIDITY_STATUS_TOPIC, () => {
       console.log('Registered for topic '+ HUMIDITY_STATUS_TOPIC);
     });
 
-    this.shadow.register( DOOR_STATUS_TOPIC, function() {
+    this.shadow.register( DOOR_STATUS_TOPIC, () => {
       console.log('Registered for topic '+ DOOR_STATUS_TOPIC);
     });
+
+    // Publish the message after 1/2 second wait
+
+    setTimeout( () => {
+       this.publishState(this.stateObject, TEMP_STATUS_TOPIC);
+    }, 500);
+
+
   }
+
+  handleStatus(thingName, stat, clientToken, stateObject) {
+   var expectedClientToken = stack.pop();
+
+   if (expectedClientToken === clientToken) {
+      console.log('got \'' + stat + '\' status on: ' + thingName);
+   } else {
+      console.log('(status) client token mismtach on: ' + thingName);
+   }
+
 }
+
+handleDelta(thingName, stateObject) {
+   if (args.testMode === 2) {
+      console.log('unexpected delta in device mode: ' + thingName);
+   } else {
+      console.log('received delta on ' + thingName +
+         ', publishing on non-thing topic...');
+      thingShadows.publish(nonThingName,
+         JSON.stringify({
+            message: 'received ' +
+               JSON.stringify(stateObject.state)
+         }));
+   }
+}
+
+handleTimeout(thingName, clientToken) {
+   var expectedClientToken = stack.pop();
+
+   if (expectedClientToken === clientToken) {
+      console.log('timeout on: ' + thingName);
+   } else {
+      console.log('(timeout) client token mismtach on: ' + thingName);
+   }
+
+   if (args.testMode === 2) {
+      genericOperation('update', generateState());
+   }
+}
+
+handleMessage(topic, payload) {
+   console.log('received on \'' + topic + '\': ' + payload.toString());
+}
+
+} // End of class
 
 const args = require('minimist')(process.argv.slice(2));
 
