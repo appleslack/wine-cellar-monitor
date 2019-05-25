@@ -20,9 +20,9 @@ class CellarMonitor extends Component {
 
   getInitialState = () => {
     let state = {
-      temperature : 65.4,
-      humidity : 45,
-      doorOpen : false,
+      temperature : undefined,
+      humidity : undefined,
+      doorOpen : undefined,
       temperatureUnit : 'farenheit',
       connected : false,
       connecting : false,

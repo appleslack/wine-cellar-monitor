@@ -5,11 +5,13 @@ import baseclasses from './Monitor.module.css';
 class TemperatureMonitor extends Component {
 
   render () {
+    var reading = this.props.currentState.temperature === undefined ? '--' :
+      this.props.currentState.temperature;;
     return (
       <div className={[ baseclasses.Monitor, classes.TemperatureMonitor].join(' ')}>
         Temperature Monitor
         <div className="indicator">
-          <h2>{this.props.currentState.temperature}</h2>
+          <h2>{reading + '  ˚f'}</h2>
         </div>
       </div>
     );
