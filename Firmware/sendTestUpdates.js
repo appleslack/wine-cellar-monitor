@@ -29,24 +29,32 @@ class WineCellarMonitorShadow {
   }
 
   processArgs(args) {
-    this.stateObject = new Object();
+    var theState = {
+      state: {
+        temperature: 54.4,
+        humidity: 34.5,
+        doorOpen: true
+      }
+    }
+
+    this.stateObject = theState;
 
     if( args.doorOpen != undefined ) {
       console.log('Door open: ', args.doorOpen);
       if( args.doorOpen === 'true') {
-        this.stateObject.doorOpen = true;
+        this.stateObject.state.doorOpen = true;
       }
       else {
-        this.stateObject.doorOpen = false;
+        this.stateObject.state.doorOpen = false;
       }
     }
     if( args.temperature != undefined ) {
       console.log('Temperature: ', args.temperature);
-      this.stateObject.temperature = args.temperature;
+      this.stateObject.state.temperature = args.temperature;
     }
     if( args.humidity != undefined ) {
       console.log('Humidity', args.humidity);
-      this.stateObject.humidity = args.humidity;
+      this.stateObject.state.humidity = args.humidity;
     }
 
     console.log('State Object is ', this.stateObject);
@@ -55,7 +63,7 @@ class WineCellarMonitorShadow {
   start() {
     console.log('Starting');
 
-    this.shadow = AWSIoTSDK.thingShadow(
+    this.shadow = AWSIoTSDK.device(
       {
         keyPath: os.homedir()+'/certs/ef010fc241-private.pem.key',
         certPath: os.homedir()+'/certs/ef010fc241-certificate.pem.crt',
@@ -122,32 +130,40 @@ class WineCellarMonitorShadow {
     });
 
   }
+  /*
+  Sending new update now...
+  UPDATE: $aws/things/WineCellarMonitor/shadow/update/#
+  payload = {"state":{"reported":{"temperature":78}},"metadata":{"reported":{"temperature":{"timestamp":1558719519}}},"version":43,"timestamp":1558719519,"clientToken":"4acdf048-0ccd-4dc9-8d5e-304548db8fa7"}
+  */
 
   publishState( stateObject, topic ) {
-    const message = JSON.stringify({
-       message: 'state ' +
-          JSON.stringify(stateObject)
-    });
+
+    const message=JSON.stringify(stateObject);
+
+    // const message = JSON.stringify({
+    //    message: 'state ' +
+    //       JSON.stringify(stateObject)
+    // });
 
     console.log('Publishing message: ', message);
-    this.shadow.publish(topic, message);
+    this.shadow.publish('$aws/things/WineCellarMonitor/shadow/update', message);
 
   }
   // Handlers for each mqtt callbacks
 
   handleConnected() {
-    this.shadow.register( TEMP_STATUS_TOPIC, () => {
-      console.log('Registered for topic '+ TEMP_STATUS_TOPIC);
-    });
-
-    this.shadow.register( HUMIDITY_STATUS_TOPIC, () => {
-      console.log('Registered for topic '+ HUMIDITY_STATUS_TOPIC);
-    });
-
-    this.shadow.register( DOOR_STATUS_TOPIC, () => {
-      console.log('Registered for topic '+ DOOR_STATUS_TOPIC);
-    });
-
+    // this.shadow.register( TEMP_STATUS_TOPIC, () => {
+    //   console.log('Registered for topic '+ TEMP_STATUS_TOPIC);
+    // });
+    //
+    // this.shadow.register( HUMIDITY_STATUS_TOPIC, () => {
+    //   console.log('Registered for topic '+ HUMIDITY_STATUS_TOPIC);
+    // });
+    //
+    // this.shadow.register( DOOR_STATUS_TOPIC, () => {
+    //   console.log('Registered for topic '+ DOOR_STATUS_TOPIC);
+    // });
+    //
     // Publish the message after 1/2 second wait
 
     setTimeout( () => {
