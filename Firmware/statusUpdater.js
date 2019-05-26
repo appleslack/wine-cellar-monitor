@@ -4,6 +4,13 @@ const AWSIoTSDK = require('aws-iot-device-sdk');
 const dotenv = require('dotenv');
 const os = require('os');
 
+// const Gpio = require('onoff').Gpio;
+// const sensor = new Gpio(4, 'out');
+var sensorLib = require('node-dht-sensor');
+
+// const button = new Gpio(4, 'in', 'both');
+// button.watch((err, value) => led.writeSync(value));
+
 const TemperatureStatusRegistered = false;
 const HumidyStatusRegistered = false;
 const DoorStatusRegistered = false;
@@ -14,7 +21,7 @@ const DOOR_STATUS_TOPIC = 'DoorStatus';
 
 class WineCellarMonitorShadow {
   constructor(args) {
-    this.shadow = undefined;
+    this.device = undefined;
     dotenv.config();
 
     this.awsConfig = {
@@ -60,10 +67,28 @@ class WineCellarMonitorShadow {
     console.log('State Object is ', this.stateObject);
   }
 
+  publishCurrentReadings() {
+    // Get temperature and Humidity
+    const sensorType = 22;
+    const sensorPin  = 4;  // The GPIO pin number for sensor signal
+    if (!sensorLib.initialize(sensorType, sensorPin)) {
+      console.warn('Failed to initialize sensor');
+      process.exit(1);
+    }
+
+    setInterval( function() {
+      var readout = sensorLib.read();
+      console.log('Temperature:', readout.temperature.toFixed(1) + 'C');
+      console.log('Humidity:   ', readout.humidity.toFixed(1)    + '%');
+
+    }, 2000);
+
+  }
+
   start() {
     console.log('Starting');
 
-    this.shadow = AWSIoTSDK.device(
+    this.device = AWSIoTSDK.device(
       {
         keyPath: os.homedir()+'/certs/ef010fc241-private.pem.key',
         certPath: os.homedir()+'/certs/ef010fc241-certificate.pem.crt',
@@ -75,20 +100,20 @@ class WineCellarMonitorShadow {
     );
     AWS.config.region = this.awsConfig.region;
 
-    this.shadow.on('connect', () => {
+    this.device.on('connect', () => {
        console.log('connected to AWS IoT');
        this.handleConnected();
     });
-    this.shadow.on('close', () => {
+    this.device.on('close', () => {
        console.log('close');
-       this.shadow.unregister(thingName);
+       this.device.unregister(thingName);
     });
 
-    this.shadow.on('reconnect', () => {
+    this.device.on('reconnect', () => {
        console.log('reconnect');
     });
 
-    this.shadow.on('offline', () => {
+    this.device.on('offline', () => {
        //
        // If any timeout is currently pending, cancel it.
        //
@@ -105,30 +130,29 @@ class WineCellarMonitorShadow {
        console.log('offline');
     });
 
-    this.shadow.on('error', function(error) {
+    this.device.on('error', function(error) {
        console.log('error', error);
     });
 
-    this.shadow.on('message', function(topic, payload) {
+    this.device.on('message', function(topic, payload) {
        console.log('message', topic, payload.toString());
     });
 
-    this.shadow.on('status', (thingName, stat, clientToken, stateObject) => {
+    this.device.on('status', (thingName, stat, clientToken, stateObject) => {
        this.handleStatus(thingName, stat, clientToken, stateObject);
     });
 
-    this.shadow.on('delta', (thingName, stateObject) => {
+    this.device.on('delta', (thingName, stateObject) => {
        this.handleDelta(thingName, stateObject);
     });
 
-    this.shadow.on('timeout', (thingName, clientToken) => {
+    this.device.on('timeout', (thingName, clientToken) => {
        this.handleTimeout(thingName, clientToken);
     });
 
-    this.shadow.on('message', (topic, payload) => {
+    this.device.on('message', (topic, payload) => {
        this.handleMessage(topic, payload);
     });
-
   }
   /*
   Sending new update now...
@@ -146,31 +170,14 @@ class WineCellarMonitorShadow {
     // });
 
     console.log('Publishing message: ', message);
-    this.shadow.publish('$aws/things/WineCellarMonitor/shadow/update', message);
+    this.device.publish('$aws/things/WineCellarMonitor/shadow/update', message);
 
   }
   // Handlers for each mqtt callbacks
 
   handleConnected() {
-    // this.shadow.register( TEMP_STATUS_TOPIC, () => {
-    //   console.log('Registered for topic '+ TEMP_STATUS_TOPIC);
-    // });
-    //
-    // this.shadow.register( HUMIDITY_STATUS_TOPIC, () => {
-    //   console.log('Registered for topic '+ HUMIDITY_STATUS_TOPIC);
-    // });
-    //
-    // this.shadow.register( DOOR_STATUS_TOPIC, () => {
-    //   console.log('Registered for topic '+ DOOR_STATUS_TOPIC);
-    // });
-    //
     // Publish the message after 1/2 second wait
-
-    setTimeout( () => {
-       this.publishState(this.stateObject, TEMP_STATUS_TOPIC);
-    }, 500);
-
-
+       this.publishCurrentReadings(this.stateObject, TEMP_STATUS_TOPIC);
   }
 
   handleStatus(thingName, stat, clientToken, stateObject) {

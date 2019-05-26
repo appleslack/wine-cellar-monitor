@@ -9,7 +9,7 @@ class TemperatureMonitor extends Component {
       this.props.currentState.temperature;;
     return (
       <div className={[ baseclasses.Monitor, classes.TemperatureMonitor].join(' ')}>
-        Temperature Monitor
+        Temperature
         <div className="indicator">
           <h2>{reading + '  ˚f'}</h2>
         </div>
