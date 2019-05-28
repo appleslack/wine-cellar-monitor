@@ -106,7 +106,6 @@ class WineCellarMonitorShadow {
     });
     this.device.on('close', () => {
        console.log('close');
-       this.device.unregister(thingName);
     });
 
     this.device.on('reconnect', () => {
@@ -114,19 +113,6 @@ class WineCellarMonitorShadow {
     });
 
     this.device.on('offline', () => {
-       //
-       // If any timeout is currently pending, cancel it.
-       //
-       if (currentTimeout !== null) {
-          this.clearTimeout(currentTimeout);
-          currentTimeout = null;
-       }
-       //
-       // If any operation is currently underway, cancel it.
-       //
-       while (stack.length) {
-          stack.pop();
-       }
        console.log('offline');
     });
 
@@ -181,47 +167,47 @@ class WineCellarMonitorShadow {
   }
 
   handleStatus(thingName, stat, clientToken, stateObject) {
-   var expectedClientToken = stack.pop();
+      var expectedClientToken = stack.pop();
 
-   if (expectedClientToken === clientToken) {
-      console.log('got \'' + stat + '\' status on: ' + thingName);
-   } else {
-      console.log('(status) client token mismtach on: ' + thingName);
+      if (expectedClientToken === clientToken) {
+         console.log('got \'' + stat + '\' status on: ' + thingName);
+      } else {
+         console.log('(status) client token mismtach on: ' + thingName);
+      }
+
    }
 
-}
-
-handleDelta(thingName, stateObject) {
-   if (args.testMode === 2) {
-      console.log('unexpected delta in device mode: ' + thingName);
-   } else {
-      console.log('received delta on ' + thingName +
-         ', publishing on non-thing topic...');
-      thingShadows.publish(nonThingName,
-         JSON.stringify({
-            message: 'received ' +
-               JSON.stringify(stateObject.state)
-         }));
-   }
-}
-
-handleTimeout(thingName, clientToken) {
-   var expectedClientToken = stack.pop();
-
-   if (expectedClientToken === clientToken) {
-      console.log('timeout on: ' + thingName);
-   } else {
-      console.log('(timeout) client token mismtach on: ' + thingName);
+   handleDelta(thingName, stateObject) {
+      if (args.testMode === 2) {
+         console.log('unexpected delta in device mode: ' + thingName);
+      } else {
+         console.log('received delta on ' + thingName +
+            ', publishing on non-thing topic...');
+         thingShadows.publish(nonThingName,
+            JSON.stringify({
+               message: 'received ' +
+                  JSON.stringify(stateObject.state)
+            }));
+      }
    }
 
-   if (args.testMode === 2) {
-      genericOperation('update', generateState());
-   }
-}
+   handleTimeout(thingName, clientToken) {
+      var expectedClientToken = stack.pop();
 
-handleMessage(topic, payload) {
-   console.log('received on \'' + topic + '\': ' + payload.toString());
-}
+      if (expectedClientToken === clientToken) {
+         console.log('timeout on: ' + thingName);
+      } else {
+         console.log('(timeout) client token mismtach on: ' + thingName);
+      }
+
+      if (args.testMode === 2) {
+         genericOperation('update', generateState());
+      }
+   }
+
+   handleMessage(topic, payload) {
+      console.log('received on \'' + topic + '\': ' + payload.toString());
+   }
 
 } // End of class
 
