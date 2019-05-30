@@ -11,13 +11,7 @@ var sensorLib = require('node-dht-sensor');
 // const button = new Gpio(4, 'in', 'both');
 // button.watch((err, value) => led.writeSync(value));
 
-const TemperatureStatusRegistered = false;
-const HumidyStatusRegistered = false;
-const DoorStatusRegistered = false;
-
 const TEMP_STATUS_TOPIC = 'TemperatureStatus';
-const HUMIDITY_STATUS_TOPIC = 'HumidityStatus';
-const DOOR_STATUS_TOPIC = 'DoorStatus';
 
 class WineCellarMonitorShadow {
   constructor(args) {
