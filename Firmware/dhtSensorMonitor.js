@@ -38,7 +38,7 @@ class dhtSensorMonitor {
 
     startMonitor() {
         this.isRunning = true;
-        
+
         if( this.initialized ) {
             this.takePeriodicReading(); 
         }
@@ -60,18 +60,19 @@ class dhtSensorMonitor {
         }
         var readings = {};
 
+        readings.timestamp = new Date();
         if( TestMode ) {
             console.log('Taking periodic reading now (TEST mode)');
 
             // Generate fake measurements in array
-            readings.temp = (65.0 + Math.random()).toFixed(1);
+            readings.temperature = (22.0 + Math.random()).toFixed(1);
             readings.humidity = (49.4 + Math.random()).toFixed(1);
         }
         else {
             console.log('Taking periodic reading now');
 
             var sensorData = sensorLib.read();
-            readings.temp = sensorData.temperature.toFixed(1);
+            readings.temperature = sensorData.temperature.toFixed(1);
             readings.humidity = sensorData.humidity.toFixed(1);
         }
         // console.log('Temperature:', readings.temp + 'C');

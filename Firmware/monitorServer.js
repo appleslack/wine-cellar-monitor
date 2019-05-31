@@ -26,42 +26,14 @@ class WineCellarMonitorShadow {
       userPoolId: process.env.REACT_APP_USER_POOL_ID
       };
 
-      this.processArgs(args);
-
       this.sensorMonitor = new SensorMonitor('dht-sensor');
       this.sensorMonitor.addMonitorType( 'temp',  tempAndHumidityGPIOPin, periodicInterval, numReadingsPerInterval);
   }
 
-  processArgs(args) {
-    this.state = {};
-
-    if( args.doorOpen != undefined ) {
-      console.log('Door open: ', args.doorOpen);
-      if( args.doorOpen === 'true') {
-        this.state.doorOpen = true;
-      }
-      else {
-        this.state.doorOpen = false;
-      }
-    }
-    if( args.temperature != undefined ) {
-      console.log('Temperature: ', args.temperature);
-      this.state.temperature = args.temperature;
-    }
-    if( args.humidity != undefined ) {
-      console.log('Humidity', args.humidity);
-      this.state.humidity = args.humidity;
-    }
-
-    console.log('State Object is ', this.state);
-  }
-
-  publishTemperatureReadings(temp, humidity) {
+  publishTemperatureReadings(readings) {
      var pubObj = {};
-     var theState = {};
+     var theState = {...readings};
 
-     theState.temperature = temp;
-     theState.humidity = humidity;
      pubObj.state = theState;
 
      const pubMsg=JSON.stringify(pubObj);
@@ -84,10 +56,10 @@ class WineCellarMonitorShadow {
     );
     AWS.config.region = this.awsConfig.region;
 
-    this.sensorMonitor.on('temp-reading', (temp, humidity) => {
-        console.log( 'New Sensor Reading:  Temperature - ' + temp + ' Humidity - ' + humidity );
+    this.sensorMonitor.on('temp-reading', (readings) => {
+        console.log( 'New Sensor Reading:  Temperature - ' + readings.temperature + ' Humidity - ' + readings.humidity );
 
-        this.publishTemperatureReadings(temp, humidity);
+        this.publishTemperatureReadings(readings);
     });
     
     this.sensorMonitor.on( 'door-status', ( doorOpenStatus ) => {

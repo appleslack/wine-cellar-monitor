@@ -13,11 +13,11 @@ sensorMonitor.addMonitorType( 'temp',  tempAndHumidityGPIOPin, periodicInterval,
 
 sensorMonitor.start();
 
-sensorMonitor.on('temp-reading', function(temp, humidity) {
-    console.log( 'New Sensor Reading:  Temperature - ' + temp + ' Humidity - ' + humidity );
+sensorMonitor.on('temp-reading', (readings) => {
+    console.log( 'New Sensor Reading:  Temperature - ' + readings.temperature + ' Humidity - ' + readings.humidity );
 });
 
-sensorMonitor.on( 'door-status', function( doorOpenStatus ) {
-    console.log( 'New Sensor Reading:  Door is ' + doorOpenStatus ? 'OPEN' : 'CLOSED');
+sensorMonitor.on( 'door-status', ( readings ) => {
+    console.log( 'New Sensor Reading:  Door is ' + readings.doorOpenStatus ? 'OPEN' : 'CLOSED');
 });
 

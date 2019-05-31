@@ -38,7 +38,7 @@ class SensorMonitor extends EventEmitter {
     }
     // Undo the listening on the gpio pins, etc.
     stop() {
-
+        this.monitor.stopMonitor();
     }
 
     addMonitorType( monitorType, pin, interval, readingsperInterval  ) {
@@ -55,17 +55,15 @@ class SensorMonitor extends EventEmitter {
     initialized = (success) => {
         console.log('callback:  initialized');
         this.emit( 'initialized', success);
-        
     };
 
     // fired
     fired = (type, readings) => {
         // console.log('Callback: fired.  Type: ', type);
-        
-        if( type === 'temp-reading') {
-            this.emit('temp-reading', readings.temp, readings.humidity);
-        } 
-
+        this.emit(type, readings);
+        // if( type === 'temp-reading') {
+        //     this.emit('temp-reading', readings);
+        // }
     };
 
     // error
