@@ -52,14 +52,6 @@ class SensorMonitor extends EventEmitter {
          }
     }
 
-    // setCallbacks(initialized, fired, error) {
-    //     this.initializedCallback = initialized;
-    //     this.firedCallback = fired;
-    //     this.sensorErrorCallback = error;
-
-    // }
-    // Want to schedule some readings to be taken every X seconds.
-
     // initialized
     initialized = (success) => {
         console.log('callback:  initialized');
