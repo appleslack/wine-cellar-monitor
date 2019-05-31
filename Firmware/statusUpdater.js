@@ -4,79 +4,69 @@ const AWSIoTSDK = require('aws-iot-device-sdk');
 const dotenv = require('dotenv');
 const os = require('os');
 
-// const Gpio = require('onoff').Gpio;
-// const sensor = new Gpio(4, 'out');
-var sensorLib = require('node-dht-sensor');
-
-// const button = new Gpio(4, 'in', 'both');
-// button.watch((err, value) => led.writeSync(value));
-
 const TEMP_STATUS_TOPIC = 'TemperatureStatus';
+
+const SensorMonitor = require('./SensorMonitor');
+
+const periodicInterval = 4;        // Every minute
+const numReadingsPerInterval = 4;   // Num readings to get average value before firing
+const tempAndHumidityGPIOPin = 4;   // The gpio pin for temp and humidity reading
+const doorOpenEventGPIOPin = 11;    //
 
 class WineCellarMonitorShadow {
   constructor(args) {
-    this.device = undefined;
-    dotenv.config();
+      this.device = undefined;
+      dotenv.config();
 
-    this.awsConfig = {
+      this.awsConfig = {
       identityPoolId: process.env.REACT_APP_IDENTITY_POOL_ID,
       mqttEndpoint: `${process.env.REACT_APP_MQTT_ID}.iot.${process.env.REACT_APP_REGION}.amazonaws.com`,
       region: process.env.REACT_APP_REGION,
       clientId: 'raspberryPiClient',
       userPoolId: process.env.REACT_APP_USER_POOL_ID
-    };
+      };
 
-    this.processArgs(args);
+      this.processArgs(args);
+
+      this.sensorMonitor = new SensorMonitor('dht-sensor');
+      this.sensorMonitor.addMonitorType( 'temp',  tempAndHumidityGPIOPin, periodicInterval, numReadingsPerInterval);
   }
 
   processArgs(args) {
-    var theState = {
-      state: {
-        temperature: 54.4,
-        humidity: 34.5,
-        doorOpen: true
-      }
-    }
-
-    this.stateObject = theState;
+    this.state = {};
 
     if( args.doorOpen != undefined ) {
       console.log('Door open: ', args.doorOpen);
       if( args.doorOpen === 'true') {
-        this.stateObject.state.doorOpen = true;
+        this.state.doorOpen = true;
       }
       else {
-        this.stateObject.state.doorOpen = false;
+        this.state.doorOpen = false;
       }
     }
     if( args.temperature != undefined ) {
       console.log('Temperature: ', args.temperature);
-      this.stateObject.state.temperature = args.temperature;
+      this.state.temperature = args.temperature;
     }
     if( args.humidity != undefined ) {
       console.log('Humidity', args.humidity);
-      this.stateObject.state.humidity = args.humidity;
+      this.state.humidity = args.humidity;
     }
 
-    console.log('State Object is ', this.stateObject);
+    console.log('State Object is ', this.state);
   }
 
-  publishCurrentReadings() {
-    // Get temperature and Humidity
-    const sensorType = 22;
-    const sensorPin  = 4;  // The GPIO pin number for sensor signal
-    if (!sensorLib.initialize(sensorType, sensorPin)) {
-      console.warn('Failed to initialize sensor');
-      process.exit(1);
-    }
+  publishTemperatureReadings(temp, humidity) {
+     var pubObj = {};
+     var theState = {};
 
-    setInterval( function() {
-      var readout = sensorLib.read();
-      console.log('Temperature:', readout.temperature.toFixed(1) + 'C');
-      console.log('Humidity:   ', readout.humidity.toFixed(1)    + '%');
+     theState.temperature = temp;
+     theState.humidity = humidity;
+     pubObj.state = theState;
 
-    }, 2000);
-
+     const pubMsg=JSON.stringify(pubObj);
+     console.log('Publishing message: ', pubMsg);
+     this.device.publish('$aws/things/WineCellarMonitor/shadow/update', pubMsg);
   }
 
   start() {
@@ -94,6 +84,16 @@ class WineCellarMonitorShadow {
     );
     AWS.config.region = this.awsConfig.region;
 
+    this.sensorMonitor.on('temp-reading', (temp, humidity) => {
+        console.log( 'New Sensor Reading:  Temperature - ' + temp + ' Humidity - ' + humidity );
+
+        this.publishTemperatureReadings(temp, humidity);
+    });
+    
+    this.sensorMonitor.on( 'door-status', ( doorOpenStatus ) => {
+        console.log( 'New Sensor Reading:  Door is ' + doorOpenStatus ? 'OPEN' : 'CLOSED');
+    });
+        
     this.device.on('connect', () => {
        console.log('connected to AWS IoT');
        this.handleConnected();
@@ -140,24 +140,8 @@ class WineCellarMonitorShadow {
   payload = {"state":{"reported":{"temperature":78}},"metadata":{"reported":{"temperature":{"timestamp":1558719519}}},"version":43,"timestamp":1558719519,"clientToken":"4acdf048-0ccd-4dc9-8d5e-304548db8fa7"}
   */
 
-  publishState( stateObject, topic ) {
-
-    const message=JSON.stringify(stateObject);
-
-    // const message = JSON.stringify({
-    //    message: 'state ' +
-    //       JSON.stringify(stateObject)
-    // });
-
-    console.log('Publishing message: ', message);
-    this.device.publish('$aws/things/WineCellarMonitor/shadow/update', message);
-
-  }
-  // Handlers for each mqtt callbacks
-
   handleConnected() {
-    // Publish the message after 1/2 second wait
-       this.publishCurrentReadings(this.stateObject, TEMP_STATUS_TOPIC);
+       this.sensorMonitor.start();
   }
 
   handleStatus(thingName, stat, clientToken, stateObject) {
