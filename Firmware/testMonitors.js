@@ -21,9 +21,6 @@ class SensorMonitor extends EventEmitter {
 
         this.monitor = undefined;
 
-        console.log('sensorMonitor constructor');
-        this.monitor = undefined;
-
         if( useMonitor === monitorType.JOHNNY_FIVE ) {
             console.log('Using JOHNNY_FIVE monitor');
             
@@ -36,77 +33,68 @@ class SensorMonitor extends EventEmitter {
     
     start() {
         this.monitor.initializeMonitor( (success) => {
-            this.sensorInitialized(success);
+            this.initialized(success);
         });
+        this.monitor.startMonitor();
     }
     // Undo the listening on the gpio pins, etc.
     stop() {
 
     }
 
-    addMonitorType( monitorType, callback, pin, interval, readingsperInterval  ) {
+    addMonitorType( monitorType, pin, interval, readingsperInterval  ) {
 
         if( monitorType === 'temp' ) {
-             this.monitor.addTempMonitor(pin, callback, interval, readingsperInterval);
+             this.monitor.addTempMonitor(pin, this.fired, interval, readingsperInterval);
          }
          else if( monitorType === 'door' ) {
-             this.monitor.addDoorMonitor(pin, callback);
+             this.monitor.addDoorMonitor(pin, this.fired);
          }
     }
 
-    setCallbacks(initialized, fired, error) {
-        this.initializedCallback = initialized;
-        this.firedCallback = fired;
-        this.sensorErrorCallback = error;
+    // setCallbacks(initialized, fired, error) {
+    //     this.initializedCallback = initialized;
+    //     this.firedCallback = fired;
+    //     this.sensorErrorCallback = error;
 
-    }
+    // }
     // Want to schedule some readings to be taken every X seconds.
 
-    sensorInitialized(success)  {
-        console.log('Sensor Initialized');
+    // initialized
+    initialized = (success) => {
+        console.log('callback:  initialized');
+        sensorMonitor.emit( 'initialized', success);
+        
+    };
 
-        // Now start reading until fail
-        if( this.initializedCallback != undefined ) {
-            this.initializedCallback(success);
-        }
-    }
+    // fired
+    fired = (type, readings) => {
+        // console.log('Callback: fired.  Type: ', type);
+        
+        if( type === 'temp-reading') {
+            sensorMonitor.emit('temp-reading', readings.temp, readings.humidity);
+        } 
+
+    };
+
+    // error
+    error = (error) => {
+        console.log('callback:  error');
+    };
+
 }
 
 module.exports = SensorMonitor;
 const sensorMonitor = new SensorMonitor('dht-sensor');
-sensorMonitor.setCallbacks( 
-    // initialized
-    () => {
-        console.log('callback:  initialized');
-        
-        
-    },
-    // fired
-    (type, readings) => {
-        // console.log('Callback: fired.  Type: ', type);
-        
-        if( type === 'temp-reading') {
-            console.log('this is ', this);
-            console.log('sensorMonitor is ', sensorMonitor);
-            
-            sensorMonitor.emit('temp-reading', readings.temp, readings.humidity);
-        } 
 
-    },
-    // error
-    (error) => {
-        console.log('callback:  error');
 
-    }
-);
-
-const periodicInterval = 60;        // Every minute
+const periodicInterval = 4;        // Every minute
 const numReadingsPerInterval = 4;   // Num readings to get average value before firing
 const tempAndHumidityGPIOPin = 4;   // The gpio pin for temp and humidity reading
 const doorOpenEventGPIOPin = 11;    //
 
-sensorMonitor.addMonitorType( 'temp',  sensorMonitor.firedCallback, tempAndHumidityGPIOPin, periodicInterval, numReadingsPerInterval);
-// sensorMonitor.addMonitorType( 'door', this.firedCallback, doorOpenEventGPIOPin);
+sensorMonitor.addMonitorType( 'temp',  tempAndHumidityGPIOPin, periodicInterval, numReadingsPerInterval);
+// sensorMonitor.addMonitorType( 'door', doorOpenEventGPIOPin);
 
 sensorMonitor.start();
 
@@ -118,11 +106,3 @@ sensorMonitor.on( 'door-status', function( doorOpenStatus ) {
     console.log( 'New Sensor Reading:  Door is ' + doorOpenStatus ? 'OPEN' : 'CLOSED');
 });
 
-// function waitForever() {
-//     console.log('Waiting');
-
-//    setTimeout( waitForever, 10000);
-// }
-// waitForever();
-
-console.log('At the end');
