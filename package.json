@@ -4,10 +4,12 @@
   "private": true,
   "dependencies": {
     "aws-iot-device-sdk": "^2.2.1",
-    "aws-sdk": "^2.463.0",
+    "aws-sdk": "^2.466.0",
+    "johnny-five": "^1.1.0",
     "minimist": "^1.2.0",
     "node-dht-sensor": "^0.3.0",
     "onoff": "^4.1.1",
+    "raspi-io": "^10.0.2",
     "react": "^16.8.6",
     "react-dom": "^16.8.6",
     "react-scripts": "3.0.0",
