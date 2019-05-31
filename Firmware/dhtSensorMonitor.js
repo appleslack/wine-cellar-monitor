@@ -13,7 +13,7 @@ class dhtSensorMonitor {
         this.interval = 60;
         this.measurementsPerReading = 0;
         this.initialized = false;
-        this.sensorFiredCallback = undefined;
+        this.firedCallback = undefined;
     }
 
     initializeMonitor( initializedCallback ) {
@@ -56,7 +56,6 @@ class dhtSensorMonitor {
         }
         console.log('Taking periodic reading now');
         var readings = {};
-        readings.type = 'temp-reading';
 
         if( TestMode ) {
             // Generate fake measurements in array
@@ -72,19 +71,25 @@ class dhtSensorMonitor {
         console.log('Humidity:   ', readings.humidity + '%');
 
         // Now inform the parent that there's new data (using callbacks for now at least)
-        if( this.sensorFiredCallback ) {
-            this.sensorFiredCallback( readings);
+        console.log('Before Calling firedCallback');
+        if( this.firedCallback ) {
+            console.log('Calling firedCallback');
+            
+            this.firedCallback( 'temp-reading', readings);
         }
 
         // Then call recursively if we're still running
         setTimeout( this.takePeriodicReading,
-            60 * 1000);
+            2 * 1000);
     }
 
-    addTempMonitor( pin, interval, measurementsPerReading ) {
+    addTempMonitor( pin, firedCallback, interval, measurementsPerReading ) {
         this.pin = pin;
         this.interval = interval;
         this.measurementsPerReading = measurementsPerReading;
+        console.log('Fired callback: ', firedCallback);
+        
+        this.firedCallback = firedCallback;
     }
 }
 module.exports = dhtSensorMonitor;

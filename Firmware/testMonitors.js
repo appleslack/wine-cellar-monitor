@@ -19,9 +19,6 @@ class SensorMonitor extends EventEmitter {
     constructor(useMonitor) {
         super();
 
-        this.finishedCallback = undefined;
-        this.sensorFiredCallback = undefined;
-        this.sensorErrorCallback = undefined;
         this.monitor = undefined;
 
         console.log('sensorMonitor constructor');
@@ -46,19 +43,14 @@ class SensorMonitor extends EventEmitter {
     stop() {
 
     }
-    sensorFiredCallback(reading) {
-        if( reading.type === 'temp-reading') {
-            this.emit('temp-reading', reading.temp, reading.humidity);
-        } 
-    }
 
     addMonitorType( monitorType, callback, pin, interval, readingsperInterval  ) {
 
         if( monitorType === 'temp' ) {
-             this.monitor.addTempMonitor(pin, this.sensorFiredCallback, interval, readingsperInterval);
+             this.monitor.addTempMonitor(pin, callback, interval, readingsperInterval);
          }
          else if( monitorType === 'door' ) {
-             this.monitor.addDoorMonitor(pin, this.sensorFiredCallback);
+             this.monitor.addDoorMonitor(pin, callback);
          }
     }
 
@@ -66,6 +58,7 @@ class SensorMonitor extends EventEmitter {
         this.initializedCallback = initialized;
         this.firedCallback = fired;
         this.sensorErrorCallback = error;
+
     }
     // Want to schedule some readings to be taken every X seconds.
 
@@ -90,7 +83,14 @@ sensorMonitor.setCallbacks(
     },
     // fired
     (type, readings) => {
-        console.log('callback:  fired');
+        // console.log('Callback: fired.  Type: ', type);
+        
+        if( type === 'temp-reading') {
+            console.log('this is ', this);
+            console.log('sensorMonitor is ', sensorMonitor);
+            
+            sensorMonitor.emit('temp-reading', readings.temp, readings.humidity);
+        } 
 
     },
     // error
@@ -105,7 +105,7 @@ const numReadingsPerInterval = 4;   // Num readings to get average value before 
 const tempAndHumidityGPIOPin = 4;   // The gpio pin for temp and humidity reading
 const doorOpenEventGPIOPin = 11;    //
 
-sensorMonitor.addMonitorType( 'temp',  this.firedCallback, tempAndHumidityGPIOPin, periodicInterval, numReadingsPerInterval);
+sensorMonitor.addMonitorType( 'temp',  sensorMonitor.firedCallback, tempAndHumidityGPIOPin, periodicInterval, numReadingsPerInterval);
 // sensorMonitor.addMonitorType( 'door', this.firedCallback, doorOpenEventGPIOPin);
 
 sensorMonitor.start();
