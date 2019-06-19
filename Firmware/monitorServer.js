@@ -31,11 +31,11 @@ class WineCellarMonitorShadow {
   }
 
   publishTemperatureReadings(readings) {
-     var pubObj = {};
-     var theState = {...readings};
-
-     pubObj.state = theState;
-
+     var pubObj = {
+        state: {
+           reported: {...readings}
+        }
+     };
      const pubMsg=JSON.stringify(pubObj);
      console.log('Publishing message: ', pubMsg);
      this.device.publish('$aws/things/WineCellarMonitor/shadow/update', pubMsg);

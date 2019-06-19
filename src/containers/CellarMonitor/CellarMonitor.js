@@ -41,18 +41,18 @@ class CellarMonitor extends Component {
   }
 
   handleMessageReceived = (msg) => {
-    var newState = new Object();
+    var newState = {};
+    console.log(msg);
 
-    if( msg.state.temperature != undefined ) {
-      newState.temperature = msg.state.temperature;
+    if( msg.state.reported.temperature !== undefined ) {
+      newState.temperature = msg.state.reported.temperature;
     }
-    if( msg.state.humidity != undefined ) {
-      newState.humidity = msg.state.humidity;
+    if( msg.state.reported.humidity !== undefined ) {
+      newState.humidity = msg.state.reported.humidity;
     }
-    if( msg.state.doorOpen != undefined ) {
-      newState.doorOpen = msg.state.doorOpen;
+    if( msg.state.reported.doorOpen !== undefined ) {
+      newState.doorOpen = msg.state.reported.doorOpen;
     }
-
 
     this.setState( newState );
 
@@ -108,7 +108,13 @@ class CellarMonitor extends Component {
       this.setState( {connected: true, connecting:false});
 
       console.log('mqttClient connected')
-      mqttClient.subscribe('$aws/things/WineCellarMonitor/shadow/update')
+      mqttClient.subscribe('$aws/things/WineCellarMonitor/shadow/update');
+
+      // To get the current state when connecting to IoT, publish to /get and subscribe
+      // to /get/accepted.  The state will be published on the /get/accepted topic to
+      // give the current state...
+      mqttClient.subscribe('$aws/things/WineCellarMonitor/shadow/get/accepted');
+      mqttClient.publish( '$aws/things/WineCellarMonitor/shadow/get' );
     });
 
     mqttClient.on('error', (err) => {
