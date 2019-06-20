@@ -23,6 +23,7 @@ const router = express.Router();
 
 // GET /readings/tandh
 router.get('/tandh', measurementsController.getTempAndHumitidyReadings);
+router.get('/tandh/last', measurementsController.getLastTempAndHumitidyReading);
 router.post('/tandh', measurementsController.postTempAndHumitidyReadings);
 
 // PUT (for testing only)

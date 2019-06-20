@@ -5,6 +5,12 @@ const Reading = require('../models/tandhReading');
 exports.getTempAndHumitidyReadings = (req, res, next) => {
     console.log('Get Readings Called!');
 
+    Reading.fetchAllReadings()
+    .then(readings => {
+
+    })
+    .catch(err => console.log(err));
+
     res.status(200).json(
     {
         // posts: [
@@ -21,6 +27,15 @@ exports.getTempAndHumitidyReadings = (req, res, next) => {
         // ]
     });
 
+};
+
+exports.getLastTempAndHumitidyReading = (req, res, next) => {
+    Reading.fetchLatestReading()
+    .then(reading => {
+        console.log( reading );
+        res.status(200).json(reading);
+    })
+    .catch(err => console.log(err));
 };
 
 exports.postTempAndHumitidyReadings = (req, res, next) => {
