@@ -1,3 +1,4 @@
+/*  jshint esversion: 6 */
 
 const AWS = require('aws-sdk');
 const AWSIoTSDK = require('aws-iot-device-sdk');

@@ -1,3 +1,5 @@
+// jshint esversion: 6
+
 import React, {Component} from 'react';
 import Modal from '../../components/UI/Modal/Modal';
 import Monitors from '../../components/Monitors/Monitors';

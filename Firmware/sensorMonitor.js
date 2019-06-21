@@ -1,3 +1,5 @@
+// jshint esversion: 6
+
 const JohnnyFiveMonitor = require('./johnnyFiveMonitor');
 const dhtSensorMonitor  = require('./dhtSensorMonitor');
 
